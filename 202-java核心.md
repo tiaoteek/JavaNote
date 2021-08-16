@@ -173,7 +173,7 @@ String s2 = new String(b, StandardCharsets.UTF_8); // 按UTF-8转换
 
 始终牢记：Java的`String`和`char`在内存中总是以Unicode编码表示。
 
-### 延伸阅读
+延伸阅读
 
 对于不同版本的JDK，`String`类在内存中有不同的优化方式。具体来说，早期JDK版本的`String`总是以`char[]`存储，而较新的JDK版本的`String`则以`byte[]`存储：如果`String`仅包含ASCII字符，则每个`byte`存储一个字符，否则，每两个`byte`存储一个字符，这样做的目的是为了节省内存，因为大量的长度较短的`String`通常仅包含ASCII字符，对于使用者来说，`String`内部的优化不影响任何已有代码，因为它的`public`方法签名是不变的。
 
@@ -395,10 +395,387 @@ JavaBean是一种符合命名规范的`class`，它通过`getter`和`setter`来�
 
 ## 枚举类
 
-## 记录类
+在Java中，我们可以通过`static final`来定义常量。
 
-## BigInteger
+```java
+public class Weekday {
+    public static final int SUN = 0;
+	...
+    public static final int SAT = 6;
+}
+```
 
-## BigDecimal
+无论是`int`常量还是`String`常量，使用这些常量来表示一组枚举值的时候，有一个严重的问题就是，编译器无法检查每个值的合理性。
+
+```java
+if (weekday == 6 || weekday == 7) {
+    if (tasks == Weekday.MON) {
+        // TODO:
+    }
+}
+```
+
+上述代码编译和运行均不会报错，但存在两个问题：
+
+- 注意到`Weekday`定义的常量范围是`0`~`6`，并不包含`7`，编译器无法检查不在枚举中的`int`值；
+- 定义的常量仍可与其他变量比较，但其用途并非是枚举星期值。
+
+### enum
+
+为了让编译器能自动检查某个值在枚举的集合内，并且，不同用途的枚举需要不同的类型来标记，不能混用，我们可以使用`enum`来定义枚举类：
+
+```java
+enum Weekday {
+    SUN, MON, TUE, WED, THU, FRI, SAT;
+}
+```
+
+注意到定义枚举类是通过关键字`enum`实现的，我们只需依次列出枚举的常量名。
+
+和`int`定义的常量相比，使用`enum`定义枚举有如下好处：
+
+首先，`enum`常量本身带有类型信息，即`Weekday.SUN`类型是`Weekday`，编译器会自动检查出类型错误。
+
+```java
+int day = 1;
+if (day == Weekday.SUN) { // Compile error: bad operand types for binary operator '=='
+}
+```
+
+其次，不可能引用到非枚举的值，因为无法通过编译。
+
+最后，不同类型的枚举不能互相比较或者赋值，因为类型不符。例如，不能给一个`Weekday`枚举类型的变量赋值为`Color`枚举类型的值：
+
+```java
+Weekday x = Weekday.SUN; // ok!
+Weekday y = Color.RED; // Compile error: incompatible types
+```
+
+这就使得编译器可以在编译期自动检查出所有可能的潜在错误。
+
+### enum的比较
+
+使用`enum`定义的枚举类是一种引用类型。前面我们讲到，引用类型比较，要使用`equals()`方法，如果使用`==`比较，它比较的是两个引用类型的变量是否是同一个对象。因此，引用类型比较，要始终使用`equals()`方法，但`enum`类型可以例外。
+
+这是因为`enum`类型的每个常量在JVM中只有一个唯一实例,所以可以直接用`==`比较：
+
+```java
+if (day == Weekday.FRI) { // ok!
+}
+if (day.equals(Weekday.SUN)) { // ok, but more code!
+}
+```
+
+### enum类型
+
+通过`enum`定义的枚举类，和其他的`class`有什么区别？
+
+答案是没有任何区别。`enum`定义的类型就是`class`，只不过它有以下几个特点：
+
+- 定义的`enum`类型总是继承自`java.lang.Enum`，且无法被继承；
+- 只能定义出`enum`的实例，而无法通过`new`操作符创建`enum`的实例；
+- 定义的每个实例都是引用类型的唯一实例；
+- 可以将`enum`类型用于`switch`语句。
+
+编译后的`enum`类和普通`class`并没有任何区别。但是我们自己无法按定义普通`class`那样来定义`enum`，必须使用`enum`关键字，这是Java语法规定的。
+
+因为`enum`是一个`class`，每个枚举的值都是`class`实例，因此，这些实例有一些方法：
+
+**name()**
+
+返回常量名，例如：
+
+```java
+String s = Weekday.SUN.name(); // "SUN"
+```
+
+**ordinal()**
+
+返回定义的常量的顺序，从0开始计数，例如：
+
+```java
+int n = Weekday.MON.ordinal(); // 1
+```
+
+改变枚举常量定义的顺序就会导致`ordinal()`返回值发生变化。例如：
+
+```java
+public enum Weekday {
+    SUN, MON, TUE, WED, THU, FRI, SAT;
+}
+```
+
+如果在代码中编写了类似`if(x.ordinal()==1)`这样的语句，就要保证`enum`的枚举顺序不能变。新增的常量必须放在最后。
+
+但是，如果不小心修改了枚举的顺序，编译器是无法检查出这种逻辑错误的。要编写健壮的代码，就不要依靠`ordinal()`的返回值。因为`enum`本身是`class`，所以我们可以定义`private`的构造方法，并且，给每个枚举常量添加字段。
+
+```java
+enum Weekday {
+    MON(1), TUE(2), WED(3), THU(4), FRI(5), SAT(6), SUN(0);
+
+    public final int dayValue;
+
+    private Weekday(int dayValue) {
+        this.dayValue = dayValue;
+    }
+}
+```
+
+这样就无需担心顺序的变化，新增枚举常量时，也需要指定一个`int`值。
+
+ 注意：枚举类的字段也可以是非final类型，即可以在运行期修改，但是不推荐这样做！
+
+默认情况下，对枚举常量调用`toString()`会返回和`name()`一样的字符串。但是，`toString()`可以被覆写，
+
+覆写`toString()`的目的是在输出时更有可读性。
+
+```java
+enum Weekday {
+    MON(1, "星期一"), TUE(2, "星期二"), WED(3, "星期三"), THU(4, "星期四"), FRI(5, "星期五"), SAT(6, "星期六"), SUN(0, "星期日");
+	...
+@Override
+public String toString() {
+    return this.chinese;
+}
+```
+
+ *注意：判断枚举常量的名字，要始终使用name()方法，绝不能调用toString()！*
+
+### 小结
+
+Java使用`enum`定义枚举类型，它被编译器编译为`final class Xxx extends Enum { … }`；
+
+通过`name()`获取常量定义的字符串，注意不要使用`toString()`；
+
+通过`ordinal()`返回常量定义的顺序（无实质意义）；
+
+可以为`enum`编写构造方法、字段和方法
+
+`enum`的构造方法要声明为`private`，字段强烈建议声明为`final`；
+
+`enum`适合用在`switch`语句中。
+
+
 
 ## 常用工具类
+
+### Math
+
+顾名思义，`Math`类就是用来进行数学计算的，它提供了大量的静态方法来便于我们实现数学计算：
+
+```java
+Math.abs(-100); // 100
+Math.max(100, 99); // 100
+Math.min(1.2, 2.3); // 1.2
+Math.pow(2, 10); // 2的10次方=1024
+Math.sqrt(2); // 1.414...
+Math.exp(2); // 7.389...
+Math.log(4); // 1.386.
+Math.log10(100); // 2
+
+Math.sin(3.14); // 0.00159...
+Math.cos(3.14); // -0.9999...
+Math.tan(3.14); // -0.0015...
+Math.asin(1.0); // 1.57079...
+Math.acos(1.0); // 0.0
+
+double pi = Math.PI; // 3.14159...
+double e = Math.E; // 2.7182818...
+```
+
+生成一个随机数x，x的范围是`0 <= x < 1`：
+
+```
+Math.random(); // 0.53907... 每次都不一样
+```
+
+如果我们要生成一个区间在`[MIN, MAX)`的随机数，可以借助`Math.random()`实现
+
+```java
+double x = Math.random(); // x的范围是[0,1)
+double min = 10;
+double max = 50;
+double y = x * (max - min) + min; // y的范围是[10,50)
+```
+
+### Random
+
+`Random`用来创建伪随机数。所谓伪随机数，是指只要给定一个初始的种子，产生的随机数序列是完全一样的。
+
+要生成一个随机数，可以使用`nextInt()`、`nextLong()`、`nextFloat()`、`nextDouble()`：
+
+```
+Random r = new Random();
+r.nextInt(); // 2071575453,每次都不一样
+r.nextInt(10); // 5,生成一个[0,10)之间的int
+r.nextLong(); // 8811649292570369305,每次都不一样
+r.nextFloat(); // 0.54335...生成一个[0,1)之间的float
+r.nextDouble(); // 0.3716...生成一个[0,1)之间的double
+```
+
+给定时间种子
+
+```java
+Random r1 = new Random(100);	//15
+Random r2 = new Random(100);	//15
+```
+
+前面我们使用的`Math.random()`实际上内部调用了`Random`类，所以它也是伪随机数，只是我们无法指定种子。
+
+**SecureRandom**
+
+有伪随机数，就有真随机数。实际上真正的真随机数只能通过量子力学原理来获取，而我们想要的是一个不可预测的安全的随机数，`SecureRandom`就是用来创建安全的随机数的：
+
+```java
+SecureRandom sr = new SecureRandom();
+System.out.println(sr.nextInt(100));
+```
+
+`SecureRandom`无法指定种子，它使用RNG（random number generator）算法。JDK的`SecureRandom`实际上有多种不同的底层实现，有的使用安全随机种子加上伪随机数算法来产生安全的随机数，有的使用真正的随机数生成器。实际使用的时候，可以优先获取高强度的安全随机数生成器，如果没有提供，再使用普通等级的安全随机数生成器.
+
+`SecureRandom`的安全性是通过操作系统提供的安全的随机种子来生成随机数。这个种子是通过CPU的热噪声、读写磁盘的字节、网络流量等各种随机事件产生的“熵”。
+
+在密码学中，安全的随机数非常重要。如果使用不安全的伪随机数，所有加密体系都将被攻破。因此，时刻牢记必须使用`SecureRandom`来产生安全的随机数。
+
+ 需要使用安全随机数的时候，必须使用SecureRandom，绝不能使用Random！
+
+### BigInteger
+
+在Java中，由CPU原生提供的整型最大范围是64位`long`型整数。使用`long`型整数可以直接通过CPU指令进行计算，速度非常快。
+
+如果我们使用的整数范围超过了`long`型，就只能用软件来模拟一个大整数。
+
+**`java.math.BigInteger`就是用来表示任意大小的整数。**
+
+`BigInteger`内部用一个`int[]`数组来模拟一个非常大的整数：
+
+```java
+BigInteger bi = new BigInteger("1234567890");
+System.out.println(bi.pow(5)); // 2867971860299718107233761438093672048294900000
+```
+
+对`BigInteger`做运算的时候，只能使用实例方法，例如，加法运算：
+
+```java
+BigInteger i1 = new BigInteger("1234567890");
+BigInteger i2 = new BigInteger("12345678901234567890");
+BigInteger sum = i1.add(i2); // 12345678902469135780
+```
+
+和`long`型整数运算比，`BigInteger`不会有范围限制，但缺点是速度比较慢。
+
+也可以把`BigInteger`转换成`long`型：
+
+```java
+BigInteger i = new BigInteger("123456789000");
+System.out.println(i.longValue()); // 123456789000
+System.out.println(i.pow(10).longValueExact()); // java.lang.ArithmeticException: BigInteger out of long range
+```
+
+使用`longValueExact()`方法时，如果超出了`long`型的范围，会抛出`ArithmeticException`。
+
+`BigInteger`和`Integer`、`Long`一样，也是不可变类，并且也继承自`Number`类。因为`Number`定义了转换为基本类型的几个方法：
+
+- 转换为`byte`：`byteValue()`
+- 转换为`short`：`shortValue()`
+- 转换为`int`：`intValue()`
+- 转换为`long`：`longValue()`
+- 转换为`float`：`floatValue()`
+- 转换为`double`：`doubleValue()`
+
+因此，通过上述方法，可以把`BigInteger`转换成基本类型。如果`BigInteger`表示的范围超过了基本类型的范围，**转换时将丢失高位信息，即结果不一定是准确的。不会报错！！！**
+
+如果需要准确地转换成基本类型，可以使用`intValueExact()`、`longValueExact()`等方法，在转换时如果超出范围，将直接抛出`ArithmeticException`异常。**这个出错会直接报错！不会像上卖弄这个结果出错但不报错！**
+
+**小结**
+
+`BigInteger`用于表示任意大小的整数；
+
+`BigInteger`是不变类，并且继承自`Number`；
+
+将`BigInteger`转换成基本类型时可使用`longValueExact()`等方法保证结果准确。
+
+
+
+
+
+
+
+### BigDecimal
+
+和`BigInteger`类似，`BigDecimal`可以表示一个任意大小且精度完全准确的浮点数。
+
+```java
+BigDecimal bd = new BigDecimal("123.4567");
+System.out.println(bd.multiply(bd)); // 15241.55677489
+```
+
+`BigDecimal`用`scale()`表示小数位数，例如：
+
+```java
+BigDecimal d1 = new BigDecimal("123.45");
+System.out.println(d1.scale()); // 2,两位小数
+```
+
+通过`BigDecimal`的`stripTrailingZeros()`方法，可以将一个`BigDecimal`格式化为一个相等的，但去掉了末尾0的`BigDecimal`：
+
+```java
+BigDecimal d1 = new BigDecimal("123.4500");
+BigDecimal d2 = d1.stripTrailingZeros();
+System.out.println(d1.scale()); // 4
+System.out.println(d2.scale()); // 2,因为去掉了00
+```
+
+如果一个`BigDecimal`的`scale()`返回负数，例如，`-2`，表示这个数是个整数，并且末尾有2个0。
+
+可以对一个`BigDecimal`设置它的`scale`，如果精度比原始值低，那么按照指定的方法进行四舍五入或者直接截断：
+
+```java
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
+BigDecimal d1 = new BigDecimal("123.456789");
+BigDecimal d2 = d1.setScale(4, RoundingMode.HALF_UP); // 四舍五入，123.4568
+BigDecimal d3 = d1.setScale(4, RoundingMode.DOWN); // 直接截断，123.4567
+```
+
+调用`divideAndRemainder()`方法时，返回的数组包含两个`BigDecimal`，分别是商和余数，其中商总是整数，余数不会大于除数。我们可以利用这个方法判断两个`BigDecimal`是否是整数倍数：
+
+```java
+BigDecimal n = new BigDecimal("12.75");
+BigDecimal m = new BigDecimal("0.15");
+BigDecimal[] dr = n.divideAndRemainder(m);
+if (dr[1].signum() == 0) {
+    // n是m的整数倍
+}
+```
+
+在比较两个`BigDecimal`的值是否相等时，要特别注意，使用`equals()`方法不但要求两个`BigDecimal`的值相等，还要求它们的`scale()`相等。
+
+```java
+BigDecimal d1 = new BigDecimal("123.456");
+BigDecimal d2 = new BigDecimal("123.45600");
+System.out.println(d1.equals(d2)); // false,因为scale不同
+System.out.println(d1.equals(d2.stripTrailingZeros())); // true,因为d2去除尾部0后scale变为2
+System.out.println(d1.compareTo(d2)); // 0
+```
+
+必须使用`compareTo()`方法来比较，它根据两个值的大小分别返回负数、正数和`0`，分别表示小于、大于和等于。
+
+ 总是使用compareTo()比较两个BigDecimal的值，不要使用equals()！
+
+`BigDecimal`也是从`Number`继承的，也是不可变对象。
+
+**小结**
+
+`BigDecimal`用于表示精确的小数，常用于财务计算；
+
+比较`BigDecimal`的值是否相等，必须使用`compareTo()`而不能使用`equals()`。
+
+### 小结
+
+Java提供的常用工具类有：
+
+- Math：数学计算
+- Random：生成伪随机数
+- SecureRandom：生成安全的随机数
