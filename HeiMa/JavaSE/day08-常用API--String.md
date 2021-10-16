@@ -448,10 +448,10 @@ public class StringBuilderDemo01 {
 
 - 添加和反转方法
 
-  | 方法名                                  | 说明                     |
-  | --------------------------------------- | ------------------------ |
-  | public StringBuilder   append(任意类型) | 添加数据，并返回对象本身 |
-  | public StringBuilder   reverse()        | 返回相反的字符序列       |
+  | 方法名                                  | 说明                                   |
+  | --------------------------------------- | -------------------------------------- |
+  | public StringBuilder   append(任意类型) | 添加数据，并返回对象本身（可连续使用） |
+  | public StringBuilder   reverse()        | 返回相反的字符序列                     |
 
 - 示例代码
 
