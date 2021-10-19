@@ -136,6 +136,16 @@
           Cat c = (Cat)a;
           c.eat();
           c.playGame();
+          
+          
+          /*错误用例
+          Animal a = new Cat();
+          a.eat();
+          //实现为Dog子类
+          a = new Dog();
+          //向下转型
+          Cat c = (Cat)a;	//虽是Animal类型，但实质上是Dog类型，只有实质为Cat类型能转为Cat类型
+          */
       }
   }
   ```
