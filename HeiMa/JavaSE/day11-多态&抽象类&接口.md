@@ -14,7 +14,7 @@
 
 ### 1.2多态中的成员访问特点（记忆）
 
-- 成员访问特点
+- **成员访问特点**
 
   - 成员变量
 
@@ -487,11 +487,13 @@
 
 ### 3.3接口的成员特点（记忆）
 
+接口是公共的东西，所以接口里的成员变量只能是常量，值不可以随便被改动；成员方法是没有内容的，是留给开发人员实现的标准入口。
+
 - 成员特点
   - 成员变量
 
-    ​	 只能是常量
-    ​	 默认修饰符：public static final
+    ​	 **只能是常量**
+    **​	 默认修饰符：public static final**
 
   - 构造方法
 
@@ -499,12 +501,14 @@
 
   - 成员方法
 
-    ​	只能是抽象方法
+    ​	**只能是抽象方法**
 
-    ​	默认修饰符：public abstract
+    ​	**默认修饰符：public abstract**
 
-    ​	关于接口中的方法，JDK8和JDK9中有一些新特性，后面再讲解
-
+    默认修饰符可以不写
+    
+    关于接口中的方法，JDK8和JDK9中有一些新特性，后面再讲解
+  
 - 代码演示
 
   - 接口
@@ -530,6 +534,7 @@
   ```java
   public class InterImpl extends Object implements Inter {
       public InterImpl() {
+          //这里是来自与object类的构造
           super();
       }
   
@@ -544,9 +549,9 @@
       }
   }
   ```
-
+  
   - 测试类
-
+  
   ```java
   public class InterfaceDemo {
       public static void main(String[] args) {
@@ -675,13 +680,37 @@
 
   ​	继承关系，只能单继承，但是可以多层继承
 
+  ```java
+  public class Animal extends Object{
+      
+  }
+  
+  public class Cat extends Animal{
+      
+  }
+  ```
+
 - 类与接口的关系
 
   ​	实现关系，可以单实现，也可以多实现，还可以在继承一个类的同时实现多个接口
 
+  ```java
+  public class Cat implements Inter1,Inter2,Inter3 {
+      
+  }
+  public class Cat extends Animal implements Inter {
+      
+  }
+  ```
+
 - 接口与接口的关系
 
   ​	继承关系，可以单继承，也可以多继承
+  
+  ```java
+  public interface Inter3 extends Inter1,Inter2 {
+  }
+  ```
 
 ### 3.6抽象类和接口的区别（记忆）
 
@@ -713,11 +742,11 @@
 
   - 抽象类
 
-    ​	对类抽象，包括属性、行为
+    ​	对类抽象，包括属性、行为     **(对某个类型的公共属性进行抽象得到)**
 
   - 接口
 
-    ​	对行为抽象，主要是行为
+    ​	对行为抽象，主要是行为	**（对某个功能进行抽象，用来补充抽象类）**
 
 ## 4.综合案例
 
