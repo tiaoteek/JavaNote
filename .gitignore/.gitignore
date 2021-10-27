@@ -2,6 +2,9 @@
 *.class
 .idea/
 
+#阅读CHM文件留下的相关文件
+.chw
+
 # Log file
 *.log
 
