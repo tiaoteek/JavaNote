@@ -26,6 +26,7 @@
       public void useCat(Cat c) { //Cat c = new Cat();
           c.eat();
       }
+     	//类名作为返回值类型
       public Cat getCat() {
           Cat c = new Cat();
           return c;
@@ -48,8 +49,8 @@
 
 * 抽象类作为形参和返回值
 
-  * 方法的形参是抽象类名，其实需要的是该抽象类的子类对象
-  * 方法的返回值是抽象类名，其实返回的是该抽象类的子类对象
+  * 方法的**形参是抽象类名**，其实需要的是**该抽象类的子类对象**
+  * 方法的**返回值是抽象类名**，其实**返回的是该抽象类的子类对象**
 
 * 示例代码：
 
@@ -77,6 +78,7 @@
           //创建操作类对象，并调用方法
           AnimalOperator ao = new AnimalOperator();
           Animal a = new Cat();
+          //这里要创建一个子类对象再传递进去，Animal是抽象类
           ao.useAnimal(a);
   
           Animal a2 = ao.getAnimal(); //new Cat()
@@ -268,7 +270,7 @@
 
 * 匿名内部类的格式
 
-  * 格式：new 类名 ( ) {  重写方法 }    new  接口名 ( ) { 重写方法 }
+  * 格式：**new 类名 ( ) {  重写方法 }    new  接口名 ( ) { 重写方法 }**
 
   * 举例： 
 
@@ -281,11 +283,11 @@
 
 * 匿名内部类的本质
 
-  * 本质：是一个继承了该类或者实现了该接口的子类匿名对象
+  * 本质：是一个继承了该类或者实现了该接口的**子类匿名对象**
 
 * 匿名内部类的细节
 
-  * 匿名内部类可以通过多态的形式接受
+  * 匿名内部类可**以通过多态的形式接受**
 
     ```java
     Inter i = new Inter(){
@@ -436,7 +438,7 @@
 
   * 选中方法，按下Ctrl + B
 
-* 重写toString方法的方式
+* **重写toString方法的方式**
 
   * 1. Alt + Insert 选择toString
   * 2. 在类的空白区域，右键 -> Generate -> 选择toString
@@ -475,7 +477,8 @@
       public void setAge(int age) {
           this.age = age;
       }
-  
+  	
+      //通过快捷键生成
       @Override
       public String toString() {
           return "Student{" +
@@ -511,9 +514,9 @@
 
 * 重写equals方法的场景
 
-  * 不希望比较对象的地址值，想要结合对象属性进行比较的时候。
+  * **不希望比较对象的地址值**，想要结合对象属性进行比较的时候。
 
-* 重写equals方法的方式
+* 重写equals方法的两种方式
 
   * 1. alt + insert  选择equals() and hashCode()，IntelliJ Default，一路next，finish即可
   * 2. 在类的空白区域，右键 -> Generate -> 选择equals() and hashCode()，后面的同上。
@@ -553,12 +556,15 @@
       public boolean equals(Object o) {
           //this -- s1
           //o -- s2
+          //先判断地址
           if (this == o) return true;
+          //判断参数是否为null，判断两个对象是否来自于一个类
           if (o == null || getClass() != o.getClass()) return false;
-  
+  		//向下转型
           Student student = (Student) o; //student -- s2
-  
+  		//比较年龄是否相同
           if (age != student.age) return false;
+          //比较姓名内容是否相同
           return name != null ? name.equals(student.name) : student.name == null;
       }
   }
@@ -582,7 +588,7 @@
 ### 3.5 冒泡排序原理（理解）
 
 * 冒泡排序概述
-  * 一种排序的方式，对要进行排序的数据中相邻的数据进行两两比较，将较大的数据放在后面，依次对所有的数据进行操作，直至所有数据按要求完成排序
+  * 一种排序的方式，对要进行排序的数据中**相邻的数据进行两两比较**，将较大的数据放在后面，依次对所有的数据进行操作，直至所有数据按要求完成排序
 * 如果有n个数据进行排序，总共需要比较n-1次
 * 每一次比较完毕，下一次的比较就会少一个数据参与
 
@@ -606,6 +612,7 @@ public class ArrayDemo {
         for (int x = 0; x < arr.length - 1; x++) {
             // -1是为了避免索引越界，-x是为了调高比较效率
             for (int i = 0; i < arr.length - 1 - x; i++) {
+                //判断，并将最大的值放在最后
                 if (arr[i] > arr[i + 1]) {
                     int temp = arr[i];
                     arr[i] = arr[i + 1];
@@ -649,3 +656,4 @@ public class ArrayDemo {
   1、构造方法用 private 修饰
 
   2、成员用 public static 修饰
+
